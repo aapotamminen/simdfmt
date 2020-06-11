@@ -28,13 +28,13 @@ An additional problem is detecting the number of leading
 zeros, which is done using the bsf (__builtin_ctzll)
 instruction.
 
-To see how fast this method is, I compare it to several
-other methods. The "sprintf" methods simply uses sprintf
-to format the integers. The "div10" method is the basic
-algorithm, but processing one integer at a time and using
-ordinary non SIMD instructions. The "div100" method
-is similar, but it divides by 100 in each step. The "table"
-method looks up the string from a precalculated table
+To see how fast this method is, I compare it with several
+other methods. The sprintf method simply uses sprintf
+to format the numbers. The div10 method is the basic
+algorithm, but processing one number at a time using
+ordinary non SIMD instructions. The div100 method
+is similar, but it divides by 100 in each step. The table
+method looks up the string from a pregenerated table
 containing all possible uint16_t values.
 
 In the test, an array of 80000000 random uint16_t is converted
@@ -48,3 +48,21 @@ The results are as follows.
 | div100 | 0.86 | 1.10 | 0.95 | 0.79 | 0.74 | 0.77 | 0.83 |
 | table | 0.62 | 0.63 | 0.62 | 0.60 | 0.60 | 0.61 | 0.61 |
 | sse | 0.46 | 0.45 | 0.44 | 0.46 | 0.46 | 0.45 | 0.45 |
+
+The sprintf method is at least 6 times as slow as anything else.
+The speed of the div10 and div100 methods depends quite a lot
+on the compiler, with div100 being slightly faster. The table
+method is faster still. The sse method is consistently the fastest,
+being up to twice as fast as div10 and about 14 times as fast
+as sprintf.
+
+The table method would be quite impractical with anything bigger
+than uint16_t. While the sse method is the fastest, the simple
+div10 and div100 methods have good performance too.
+
+Using AVX would allow processing twice as many numbers in
+parallel. However, it's possible that reordering the digits becomes
+even more complicated then. It would also be useful to check the
+results for converting uint32_t and uint64_t. Since less parallelism
+is possible with those types, the speed advantage compared to div10
+and div100 might be lost.
