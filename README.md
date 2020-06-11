@@ -39,7 +39,7 @@ containing all possible uint16_t values.
 
 In the test, an array of 80000000 random uint16_t is converted
 to string and the time is measured in seconds.
-The results are as follows.
+The results are as follows (lower is better).
 
 | | GCC 7 | GCC 8 | GCC 9 | Clang 6 | Clang 7 | Clang 8 | Clang 9 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
