@@ -47,7 +47,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     __m128i zero8 = _mm_set1_epi8('0');
     __m128i zero16 = _mm_set1_epi16('0');
     __m128i comma = _mm_set1_epi8(',');
-    __m128i es = _mm_setr_epi8(0, 2, 4, 6, 255, 255, 255, 255, 8, 10, 12, 14, 255, 255, 255, 255);
+    __m128i es = _mm_setr_epi8(0, 2, 4, 6, -1, -1, -1, -1, 8, 10, 12, 14, -1, -1, -1, -1);
     __m128i x = _mm_loadu_si128((__m128i *) xx);
 
     /* e = least significant digit (digit 0) */
