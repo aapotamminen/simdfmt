@@ -1,2 +1,3 @@
-simdfmt:
-	gcc -O3 -march=ivybridge simdfmt.c -o simdfmt
+CFLAGS=-O3 -march=ivybridge
+
+simdfmt: simdfmt.o
