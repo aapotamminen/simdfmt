@@ -102,11 +102,8 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = _mm_shuffle_epi32(h, 0x08);
     /* Combine with digit 0 + comma */
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec0, 0x44);
-    /* Count number of leading zeros in digits 4 - 1. Avoid UD when input == 0. */
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    /* Count number of leading zeros in digits 4 - 1 */
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     /* Skip leading zeros, join with digit 0 and comma, store to buffer */
     txt = _mm_shuffle_epi8(h, *(__m128i *) &ss[16 * nz]);
     _mm_storeu_si128((__m128i *) &buf[n], txt);
@@ -116,10 +113,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0x55);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec0, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss1[16 * nz]);
     _mm_storeu_si128((__m128i *) &buf[n], txt);
     n += 6 - nz;
@@ -128,10 +122,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0xaa);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec0, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss2[16 * nz]);
     _mm_storel_epi64((__m128i *) &buf[n], txt);
     n += 6 - nz;
@@ -140,10 +131,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0xff);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec0, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss3[16 * nz]);
     _mm_storel_epi64((__m128i *) &buf[n], txt);
     n += 6 - nz;
@@ -155,10 +143,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0x00);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec1, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss[16 * nz]);
     _mm_storel_epi64((__m128i *) &buf[n], txt);
     n += 6 - nz;
@@ -167,10 +152,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0x55);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec1, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss1[16 * nz]);
     _mm_storel_epi64((__m128i *) &buf[n], txt);
     n += 6 - nz;
@@ -179,10 +161,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0xaa);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec1, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss2[16 * nz]);
     _mm_storel_epi64((__m128i *) &buf[n], txt);
     n += 6 - nz;
@@ -191,10 +170,7 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     h = (__m128i)_mm_shuffle_ps((__m128)f, (__m128)g, 0xff);
     h = _mm_shuffle_epi32(h, 0x08);
     h = (__m128i)_mm_shuffle_ps((__m128)h, (__m128)ec1, 0x44);
-    z = _mm_cmpeq_epi16(h, zero16);
-    _mm_storel_epi64((__m128i *) &zu, z);
-    zu = (zu >> 1) + 1;
-    nz = (__builtin_ctzll(zu) + 1) >> 4;
+    nz = _mm_cmpistri(h, zero16, _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     txt =_mm_shuffle_epi8(h, *(__m128i *) &ss3[16 * nz]);
     _mm_storel_epi64((__m128i *) &buf[n], txt);
     n += 6 - nz;
