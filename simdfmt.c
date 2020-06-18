@@ -43,6 +43,8 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
 {
     __m128i const10 = _mm_set1_epi16(10);
     __m128i const10inv = _mm_set1_epi16(0xcccd);
+    __m128i const100 = _mm_set1_epi16(100);
+    __m128i const100inv = _mm_set1_epi16(0xa3d8);
     __m128i zero = _mm_set1_epi16('0');
     __m128i zero8 = _mm_set1_epi8('0');
     __m128i zero16 = _mm_set1_epi16('0');
@@ -58,29 +60,26 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
     /* e = x + '0' */
     __m128i e = _mm_add_epi16(x, zero);
 
+    /* Divide z by 100: x = z % 100, z = z / 100 */
+    x = z;
+    z = _mm_srli_epi16(_mm_mulhi_epu16(z, const100inv), 6);
+    x = _mm_sub_epi16(x, _mm_mullo_epi16(z, const100));
+
+    /* Divide x by 10: x = x % 10, y = x / 10 */
+    __m128i y = _mm_srli_epi16(_mm_mulhi_epu16(x, const10inv), 3);
+    x = _mm_sub_epi16(x, _mm_mullo_epi16(y, const10));
     /* d = digit 1 */
-    x = z;
-    z = _mm_srli_epi16(_mm_mulhi_epu16(z, const10inv), 3);
-    x = _mm_sub_epi16(x, _mm_mullo_epi16(z, const10));
     __m128i d = _mm_add_epi16(x, zero);
-
     /* c = digit 2 */
-    x = z;
-    z = _mm_srli_epi16(_mm_mulhi_epu16(z, const10inv), 3);
-    x = _mm_sub_epi16(x, _mm_mullo_epi16(z, const10));
-    __m128i c = _mm_add_epi16(x, zero);
+    __m128i c = _mm_add_epi16(y, zero);
 
-    /* b = digit 3 */
-    x = z;
-    z = _mm_srli_epi16(_mm_mulhi_epu16(z, const10inv), 3);
-    x = _mm_sub_epi16(x, _mm_mullo_epi16(z, const10));
-    __m128i b = _mm_add_epi16(x, zero);
-
-    /* a = digit 4 */
-    x = z;
-    z = _mm_srli_epi16(_mm_mulhi_epu16(z, const10inv), 3);
-    x = _mm_sub_epi16(x, _mm_mullo_epi16(z, const10));
-    __m128i a = _mm_add_epi16(x, zero);
+    /* Divide z by 10: z = z % 10, y = z / 10 */
+    y = _mm_srli_epi16(_mm_mulhi_epu16(z, const10inv), 3);
+    z = _mm_sub_epi16(z, _mm_mullo_epi16(y, const10));
+    /* b = digit 1 */
+    __m128i b = _mm_add_epi16(z, zero);
+    /* a = digit 2 */
+    __m128i a = _mm_add_epi16(y, zero);
 
     /* Gather least significant digits and interleave with commas */
     __m128i ee = _mm_shuffle_epi8(e, es);
