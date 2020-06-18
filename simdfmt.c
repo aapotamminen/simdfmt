@@ -259,9 +259,10 @@ int main()
     size_t len[methods];
     int ok[methods];
     int k;
-    const int rep = 10000000;
+    const int rep = 12500000;
     const size_t size = (size_t)rep * 8 * 6 + 1;
     struct timeval start, stop;
+    double time;
     char *p;
 
     for (k = 0; k < methods; k++)
@@ -280,7 +281,8 @@ int main()
     len[0] = p - buf[0];
     ok[0] = 1;
     gettimeofday(&stop, NULL);
-    printf("%zu %d %.2f\n", len[0], ok[0], stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[0], ok[0], time, rep * 8 / time);
 
     printf("div10: \t");
     gettimeofday(&start, NULL);
@@ -291,7 +293,8 @@ int main()
     len[1] = p - buf[1];
     ok[1] = (len[1] == len[0] && memcmp(buf[0], buf[1], len[0]) == 0);
     gettimeofday(&stop, NULL);
-    printf("%zu %d %.2f\n", len[1], ok[1], stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[1], ok[1], time, rep * 8 / time);
 
     printf("div100:\t");
     gettimeofday(&start, NULL);
@@ -302,7 +305,8 @@ int main()
     len[2] = p - buf[2];
     ok[2] = (len[2] == len[0] && memcmp(buf[0], buf[2], len[0]) == 0);
     gettimeofday(&stop, NULL);
-    printf("%zu %d %.2f\n", len[2], ok[2], stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[2], ok[2], time, rep * 8 / time);
 
     printf("table:\t");
     gettimeofday(&start, NULL);
@@ -313,7 +317,8 @@ int main()
     len[3] = p - buf[3];
     ok[3] = (len[3] == len[0] && memcmp(buf[0], buf[3], len[0]) == 0);
     gettimeofday(&stop, NULL);
-    printf("%zu %d %.2f\n", len[3], ok[3], stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[3], ok[3], time, rep * 8 / time);
 
     printf("sse:\t");
     gettimeofday(&start, NULL);
@@ -324,7 +329,8 @@ int main()
     len[4] = p - buf[4];
     ok[4] = (len[4] == len[0] && memcmp(buf[0], buf[4], len[0]) == 0);
     gettimeofday(&stop, NULL);
-    printf("%zu %d %.2f\n", len[4], ok[4], stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[4], ok[4], time, rep * 8 / time);
 
     free(xx);
     for (k = 0; k < methods; k++)
