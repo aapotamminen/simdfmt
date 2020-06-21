@@ -409,7 +409,7 @@ size_t fmt_u16_div10000(char *buf, const uint16_t* xx)
         y = x % 10000;
         x /= 10000;
         xbuf[0] = fmt_div10000_digits[4 * x + 3];
-        memcpy(&xbuf[1], &fmt_div1000_digits[4 * y], 4);
+        memcpy(&xbuf[1], &fmt_div10000_digits[4 * y], 4);
         for (j = 0; j < 4 && xbuf[j] == '0'; j++);
         memcpy(&buf[n], &xbuf[j], 5);
         n += 5 - j;
