@@ -385,6 +385,43 @@ size_t fmt_u32_div1000(char *buf, const uint32_t* xx)
     return n;
 }
 
+size_t fmt_u64_div1000(char *buf, const uint64_t* xx)
+{
+    uint64_t x, y1, y2, y3, y4, y5, y6;
+    int i, j;
+    char xbuf[64] __attribute__((aligned(4)));
+    size_t n = 0;
+
+    for (i = 0; i < 8; i++) {
+        x = xx[i];
+        y1 = x % 1000;
+        x /= 1000;
+        y2 = x % 1000;
+        x /= 1000;
+        y3 = x % 1000;
+        x /= 1000;
+        y4 = x % 1000;
+        x /= 1000;
+        y5 = x % 1000;
+        x /= 1000;
+        y6 = x % 1000;
+        x /= 1000;
+        memcpy(&xbuf[0], &fmt_div1000_digits[4 * x + 1], 2);
+        memcpy(&xbuf[2], &fmt_div1000_digits[4 * y6], 4);
+        memcpy(&xbuf[5], &fmt_div1000_digits[4 * y5], 4);
+        memcpy(&xbuf[8], &fmt_div1000_digits[4 * y4], 4);
+        memcpy(&xbuf[11], &fmt_div1000_digits[4 * y3], 4);
+        memcpy(&xbuf[14], &fmt_div1000_digits[4 * y2], 4);
+        memcpy(&xbuf[17], &fmt_div1000_digits[4 * y1], 4);
+        for (j = 0; j < 19 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 20);
+        n += 20 - j;
+        buf[n++] = ',';
+    }
+    buf[n] = 0;
+    return n;
+}
+
 char *fmt_div10000_digits;
 
 void fmt_div10000_init(void)
@@ -444,6 +481,37 @@ size_t fmt_u32_div10000(char *buf, const uint32_t* xx)
     return n;
 }
 
+size_t fmt_u64_div10000(char *buf, const uint64_t* xx)
+{
+    uint64_t x, y1, y2, y3, y4;
+    int i, j;
+    char xbuf[64] __attribute__((aligned(4)));
+    size_t n = 0;
+
+    for (i = 0; i < 8; i++) {
+        x = xx[i];
+        y1 = x % 10000;
+        x /= 10000;
+        y2 = x % 10000;
+        x /= 10000;
+        y3 = x % 10000;
+        x /= 10000;
+        y4 = x % 10000;
+        x /= 10000;
+        memcpy(&xbuf[0], &fmt_div10000_digits[4 * x], 4);
+        memcpy(&xbuf[4], &fmt_div10000_digits[4 * y4], 4);
+        memcpy(&xbuf[8], &fmt_div10000_digits[4 * y3], 4);
+        memcpy(&xbuf[12], &fmt_div10000_digits[4 * y2], 4);
+        memcpy(&xbuf[16], &fmt_div10000_digits[4 * y1], 4);
+        for (j = 0; j < 19 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 20);
+        n += 20 - j;
+        buf[n++] = ',';
+    }
+    buf[n] = 0;
+    return n;
+}
+
 char *fmt_div100000_digits;
 
 void fmt_div100000_init(void)
@@ -472,6 +540,34 @@ size_t fmt_u32_div100000(char *buf, const uint32_t* xx)
         for (j = 0; j < 9 && xbuf[j] == '0'; j++);
         memcpy(&buf[n], &xbuf[j], 10);
         n += 10 - j;
+        buf[n++] = ',';
+    }
+    buf[n] = 0;
+    return n;
+}
+
+size_t fmt_u64_div100000(char *buf, const uint64_t* xx)
+{
+    uint64_t x, y1, y2, y3;
+    int i, j;
+    char xbuf[64];
+    size_t n = 0;
+
+    for (i = 0; i < 8; i++) {
+        x = xx[i];
+        y1 = x % 100000;
+        x /= 100000;
+        y2 = x % 100000;
+        x /= 100000;
+        y3 = x % 100000;
+        x /= 100000;
+        memcpy(&xbuf[0], &fmt_div100000_digits[5 * x], 5);
+        memcpy(&xbuf[5], &fmt_div100000_digits[5 * y3], 5);
+        memcpy(&xbuf[10], &fmt_div100000_digits[5 * y2], 5);
+        memcpy(&xbuf[15], &fmt_div100000_digits[5 * y1], 5);
+        for (j = 0; j < 19 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 20);
+        n += 20 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -514,6 +610,7 @@ int main()
     //uint16_t xx[] = { 1, 12, 123, 1234, 12345, 23456, 34567, 45678 };
     uint16_t *xx;
     uint32_t *xu32;
+    uint64_t *xu64;
     const int methods = 7;
     char *buf[methods];
     size_t len[methods];
@@ -521,7 +618,7 @@ int main()
     int m;
     int k;
     const int rep = 12500000;
-    const size_t size = (size_t)rep * 8 * 11 + 1;
+    const size_t size = (size_t)rep * 8 * 21 + 1;
     struct timeval start, stop;
     double time;
     char *p;
@@ -535,7 +632,7 @@ int main()
 
     m = 0;
 #if 0
-    printf("%-12s", "sprintf:");
+    printf("%-16s", "u16 sprintf:");
     gettimeofday(&start, NULL);
     p = buf[m];
     for (k = 0; k < rep * 8; k++) {
@@ -549,7 +646,7 @@ int main()
 #endif
 
     m++;
-    printf("%-12s", "div10:");
+    printf("%-16s", "u16 div10:");
     gettimeofday(&start, NULL);
     p = buf[m];
     for (k = 0; k < rep; k++) {
@@ -562,7 +659,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div100:");
+    printf("%-16s", "u16 div100:");
     fmt_div100_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -576,7 +673,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div1000:");
+    printf("%-16s", "u16 div1000:");
     fmt_div1000_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -590,7 +687,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div10000:");
+    printf("%-16s", "u16 div10000:");
     fmt_div10000_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -604,7 +701,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "table:");
+    printf("%-16s", "u16 table:");
     fmt_u16_table_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -618,7 +715,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "sse:");
+    printf("%-16s", "u16 sse:");
     gettimeofday(&start, NULL);
     p = buf[m];
     for (k = 0; k < rep; k++) {
@@ -636,7 +733,7 @@ int main()
 
     m = 0;
 #if 0
-    printf("%-12s", "sprintf:");
+    printf("%-16s", "u32 sprintf:");
     gettimeofday(&start, NULL);
     p = buf[m];
     for (k = 0; k < rep * 8; k++) {
@@ -650,7 +747,7 @@ int main()
 #endif
 
     m++;
-    printf("%-12s", "div10:");
+    printf("%-16s", "u32 div10:");
     gettimeofday(&start, NULL);
     p = buf[m];
     for (k = 0; k < rep; k++) {
@@ -663,7 +760,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div100:");
+    printf("%-16s", "u32 div100:");
     fmt_div100_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -677,7 +774,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div1000:");
+    printf("%-16s", "u32 div1000:");
     fmt_div1000_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -691,7 +788,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div10000:");
+    printf("%-16s", "u32 div10000:");
     fmt_div10000_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -705,7 +802,7 @@ int main()
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
     m++;
-    printf("%-12s", "div100000:");
+    printf("%-16s", "u32 div100000:");
     fmt_div100000_init();
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -718,6 +815,65 @@ int main()
     time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
 
+    xu64 = malloc(rep * 8 * sizeof(uint64_t));
+    for (k = 0; k < rep * 8; k++)
+        xu64[k] = (((uint64_t)rand()) << 32) | rand();
+
+    m = 0;
+#if 0
+    printf("%-16s", "u64 sprintf:");
+    gettimeofday(&start, NULL);
+    p = buf[m];
+    for (k = 0; k < rep * 8; k++) {
+        p += sprintf(p, "%lu,", xu64[k]);
+    }
+    len[m] = p - buf[m];
+    ok[m] = 1;
+    gettimeofday(&stop, NULL);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+#endif
+
+    m++;
+    printf("%-16s", "u64 div1000:");
+    gettimeofday(&start, NULL);
+    p = buf[m];
+    for (k = 0; k < rep; k++) {
+        p += fmt_u64_div1000(p, &xu64[k * 8]);
+    }
+    len[m] = p - buf[m];
+    ok[m] = (len[m] == len[0] && memcmp(buf[0], buf[m], len[0]) == 0);
+    gettimeofday(&stop, NULL);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+
+    m++;
+    printf("%-16s", "u64 div10000:");
+    gettimeofday(&start, NULL);
+    p = buf[m];
+    for (k = 0; k < rep; k++) {
+        p += fmt_u64_div10000(p, &xu64[k * 8]);
+    }
+    len[m] = p - buf[m];
+    ok[m] = (len[m] == len[0] && memcmp(buf[0], buf[m], len[0]) == 0);
+    gettimeofday(&stop, NULL);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+
+    m++;
+    printf("%-16s", "u64 div100000:");
+    gettimeofday(&start, NULL);
+    p = buf[m];
+    for (k = 0; k < rep; k++) {
+        p += fmt_u64_div100000(p, &xu64[k * 8]);
+    }
+    len[m] = p - buf[m];
+    ok[m] = (len[m] == len[0] && memcmp(buf[0], buf[m], len[0]) == 0);
+    gettimeofday(&stop, NULL);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+
+    free(xu64);
     free(xu32);
     free(xx);
     for (k = 0; k < methods; k++)
