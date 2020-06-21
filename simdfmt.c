@@ -303,11 +303,11 @@ char *fmt_div1000_digits;
 
 void fmt_div1000_init(void)
 {
-    fmt_div1000_digits = malloc(1000 * 3);
+    fmt_div1000_digits = malloc(1000 * 4);
 
     int i;
     for (i = 0; i < 1000; i++) {
-        sprintf(&fmt_div1000_digits[3 * i], "%03d", i);
+        sprintf(&fmt_div1000_digits[4 * i], "%03d ", i);
     }
 }
 
@@ -322,11 +322,11 @@ size_t fmt_u16_div1000(char *buf, const uint16_t* xx)
         x = xx[i];
         y = x % 1000;
         x /= 1000;
-        xbuf[2] = fmt_div1000_digits[3 * y];
-        xbuf[1] = fmt_div1000_digits[3 * y + 1];
-        xbuf[0] = fmt_div1000_digits[3 * y + 2];
-        xbuf[4] = fmt_div1000_digits[3 * x + 1];
-        xbuf[3] = fmt_div1000_digits[3 * x + 2];
+        xbuf[2] = fmt_div1000_digits[4 * y];
+        xbuf[1] = fmt_div1000_digits[4 * y + 1];
+        xbuf[0] = fmt_div1000_digits[4 * y + 2];
+        xbuf[4] = fmt_div1000_digits[4 * x + 1];
+        xbuf[3] = fmt_div1000_digits[4 * x + 2];
         for (j = 4; j > 0 && xbuf[j] == '0'; j--);
         for (; j >= 0; j--)
             buf[n++] = xbuf[j];
@@ -338,32 +338,26 @@ size_t fmt_u16_div1000(char *buf, const uint16_t* xx)
 
 size_t fmt_u32_div1000(char *buf, const uint32_t* xx)
 {
-    uint32_t x, y;
+    uint32_t x, y1, y2, y3;
     int i, j;
-    char xbuf[10];
+    char xbuf[16] __attribute__((aligned(4)));
     size_t n = 0;
 
     for (i = 0; i < 8; i++) {
         x = xx[i];
-        y = x % 1000;
+        y1 = x % 1000;
         x /= 1000;
-        xbuf[2] = fmt_div1000_digits[3 * y];
-        xbuf[1] = fmt_div1000_digits[3 * y + 1];
-        xbuf[0] = fmt_div1000_digits[3 * y + 2];
-        y = x % 1000;
+        y2 = x % 1000;
         x /= 1000;
-        xbuf[5] = fmt_div1000_digits[3 * y];
-        xbuf[4] = fmt_div1000_digits[3 * y + 1];
-        xbuf[3] = fmt_div1000_digits[3 * y + 2];
-        y = x % 1000;
+        y3 = x % 1000;
         x /= 1000;
-        xbuf[8] = fmt_div1000_digits[3 * y];
-        xbuf[7] = fmt_div1000_digits[3 * y + 1];
-        xbuf[6] = fmt_div1000_digits[3 * y + 2];
-        xbuf[9] = fmt_div1000_digits[3 * x + 2];
-        for (j = 9; j > 0 && xbuf[j] == '0'; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j];
+        xbuf[0] = fmt_div1000_digits[4 * x + 2];
+        memcpy(&xbuf[1], &fmt_div1000_digits[4 * y3], 4);
+        memcpy(&xbuf[4], &fmt_div1000_digits[4 * y2], 4);
+        memcpy(&xbuf[7], &fmt_div1000_digits[4 * y1], 4);
+        for (j = 0; j < 9 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 10);
+        n += 10 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -409,30 +403,23 @@ size_t fmt_u16_div10000(char *buf, const uint16_t* xx)
 
 size_t fmt_u32_div10000(char *buf, const uint32_t* xx)
 {
-    uint32_t x, y;
+    uint32_t x, y1, y2;
     int i, j;
-    char xbuf[10];
+    char xbuf[16] __attribute__((aligned(4)));
     size_t n = 0;
 
     for (i = 0; i < 8; i++) {
         x = xx[i];
-        y = x % 10000;
+        y1 = x % 10000;
         x /= 10000;
-        xbuf[3] = fmt_div10000_digits[4 * y];
-        xbuf[2] = fmt_div10000_digits[4 * y + 1];
-        xbuf[1] = fmt_div10000_digits[4 * y + 2];
-        xbuf[0] = fmt_div10000_digits[4 * y + 3];
-        y = x % 10000;
+        y2 = x % 10000;
         x /= 10000;
-        xbuf[7] = fmt_div10000_digits[4 * y];
-        xbuf[6] = fmt_div10000_digits[4 * y + 1];
-        xbuf[5] = fmt_div10000_digits[4 * y + 2];
-        xbuf[4] = fmt_div10000_digits[4 * y + 3];
-        xbuf[9] = fmt_div10000_digits[4 * x + 2];
-        xbuf[8] = fmt_div10000_digits[4 * x + 3];
-        for (j = 9; j > 0 && xbuf[j] == '0'; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j];
+        memcpy(&xbuf[0], &fmt_div10000_digits[4 * x + 2], 2);
+        memcpy(&xbuf[2], &fmt_div10000_digits[4 * y2], 4);
+        memcpy(&xbuf[7], &fmt_div10000_digits[4 * y1], 4);
+        for (j = 0; j < 9 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 10);
+        n += 10 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -462,19 +449,11 @@ size_t fmt_u32_div100000(char *buf, const uint32_t* xx)
         x = xx[i];
         y = x % 100000;
         x /= 100000;
-        xbuf[4] = fmt_div100000_digits[5 * y];
-        xbuf[3] = fmt_div100000_digits[5 * y + 1];
-        xbuf[2] = fmt_div100000_digits[5 * y + 2];
-        xbuf[1] = fmt_div100000_digits[5 * y + 3];
-        xbuf[0] = fmt_div100000_digits[5 * y + 4];
-        xbuf[9] = fmt_div100000_digits[5 * x];
-        xbuf[8] = fmt_div100000_digits[5 * x + 1];
-        xbuf[7] = fmt_div100000_digits[5 * x + 2];
-        xbuf[6] = fmt_div100000_digits[5 * x + 3];
-        xbuf[5] = fmt_div100000_digits[5 * x + 4];
-        for (j = 9; j > 0 && xbuf[j] == '0'; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j];
+        memcpy(&xbuf[0], &fmt_div100000_digits[5 * x], 5);
+        memcpy(&xbuf[5], &fmt_div100000_digits[5 * y], 5);
+        for (j = 0; j < 9 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 10);
+        n += 10 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -537,6 +516,7 @@ int main()
         xx[k] = rand();
 
     m = 0;
+#if 0
     printf("%-12s", "sprintf:");
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -548,6 +528,7 @@ int main()
     gettimeofday(&stop, NULL);
     time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+#endif
 
     m++;
     printf("%-12s", "div10:");
@@ -636,6 +617,7 @@ int main()
         xu32[k] = rand();
 
     m = 0;
+#if 0
     printf("%-12s", "sprintf:");
     gettimeofday(&start, NULL);
     p = buf[m];
@@ -647,6 +629,7 @@ int main()
     gettimeofday(&stop, NULL);
     time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
     printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+#endif
 
     m++;
     printf("%-12s", "div10:");
