@@ -180,21 +180,29 @@ size_t fmt_u16_sse(char *buf, const uint16_t *xx)
 
 size_t fmt_u16_div10(char *buf, const uint16_t* xx)
 {
-    uint16_t x, y;
+    uint16_t x, y1, y2, y3, y4;
     int i, j;
-    char xbuf[8];
+    char xbuf[10];
     size_t n = 0;
 
     for (i = 0; i < 8; i++) {
         x = xx[i];
-        for (j = 0; j < 5; j++) {
-            y = x % 10;
-            x /= 10;
-            xbuf[j] = y;
-        }
-        for (j = 4; j > 0 && !xbuf[j]; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j] + '0';
+        y1 = x % 10;
+        x /= 10;
+        y2 = x % 10;
+        x /= 10;
+        y3 = x % 10;
+        x /= 10;
+        y4 = x % 10;
+        x /= 10;
+        xbuf[0] = x + '0';
+        xbuf[1] = y4 + '0';
+        xbuf[2] = y3 + '0';
+        xbuf[3] = y2 + '0';
+        xbuf[4] = y1 + '0';
+        for (j = 0; j < 4 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 5);
+        n += 5 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -261,25 +269,23 @@ void fmt_div100_init(void)
 
 size_t fmt_u16_div100(char *buf, const uint16_t* xx)
 {
-    uint16_t x, y;
+    uint16_t x, y1, y2;
     int i, j;
     char xbuf[8];
     size_t n = 0;
 
     for (i = 0; i < 8; i++) {
         x = xx[i];
-        y = x % 100;
+        y1 = x % 100;
         x /= 100;
-        xbuf[1] = fmt_div100_digits[2 * y];
-        xbuf[0] = fmt_div100_digits[2 * y + 1];
-        y = x % 100;
+        y2 = x % 100;
         x /= 100;
-        xbuf[3] = fmt_div100_digits[2 * y];
-        xbuf[2] = fmt_div100_digits[2 * y + 1];
-        xbuf[4] = x + '0';
-        for (j = 4; j > 0 && xbuf[j] == '0'; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j];
+        xbuf[0] = x + '0';
+        memcpy(&xbuf[1], &fmt_div100_digits[2 * y2], 2);
+        memcpy(&xbuf[3], &fmt_div100_digits[2 * y1], 2);
+        for (j = 0; j < 4 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 5);
+        n += 5 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -340,14 +346,11 @@ size_t fmt_u16_div1000(char *buf, const uint16_t* xx)
         x = xx[i];
         y = x % 1000;
         x /= 1000;
-        xbuf[2] = fmt_div1000_digits[4 * y];
-        xbuf[1] = fmt_div1000_digits[4 * y + 1];
-        xbuf[0] = fmt_div1000_digits[4 * y + 2];
-        xbuf[4] = fmt_div1000_digits[4 * x + 1];
-        xbuf[3] = fmt_div1000_digits[4 * x + 2];
-        for (j = 4; j > 0 && xbuf[j] == '0'; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j];
+        memcpy(&xbuf[0], &fmt_div1000_digits[4 * x + 1], 2);
+        memcpy(&xbuf[2], &fmt_div1000_digits[4 * y], 3);
+        for (j = 0; j < 4 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 5);
+        n += 5 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -405,14 +408,11 @@ size_t fmt_u16_div10000(char *buf, const uint16_t* xx)
         x = xx[i];
         y = x % 10000;
         x /= 10000;
-        xbuf[3] = fmt_div10000_digits[4 * y];
-        xbuf[2] = fmt_div10000_digits[4 * y + 1];
-        xbuf[1] = fmt_div10000_digits[4 * y + 2];
-        xbuf[0] = fmt_div10000_digits[4 * y + 3];
-        xbuf[4] = fmt_div10000_digits[4 * x + 3];
-        for (j = 4; j > 0 && xbuf[j] == '0'; j--);
-        for (; j >= 0; j--)
-            buf[n++] = xbuf[j];
+        xbuf[0] = fmt_div10000_digits[4 * x + 3];
+        memcpy(&xbuf[1], &fmt_div1000_digits[4 * y], 4);
+        for (j = 0; j < 4 && xbuf[j] == '0'; j++);
+        memcpy(&buf[n], &xbuf[j], 5);
+        n += 5 - j;
         buf[n++] = ',';
     }
     buf[n] = 0;
