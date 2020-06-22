@@ -498,7 +498,6 @@ size_t fmt_u32_div10000_sse(char *buf, const uint32_t* xx)
 
     uint32_t x, y1, y2;
     int i, j;
-    char xbuf[16] __attribute__((aligned(16)));
     size_t n = 0;
 
     for (i = 0; i < 8; i++) {
@@ -547,6 +546,65 @@ size_t fmt_u64_div10000(char *buf, const uint64_t* xx)
         for (j = 0; j < 19 && xbuf[j] == '0'; j++);
         memcpy(&buf[n], &xbuf[j], 20);
         n += 20 - j;
+        buf[n++] = ',';
+    }
+    buf[n] = 0;
+    return n;
+}
+
+size_t fmt_u64_div10000_sse(char *buf, const uint64_t* xx)
+{
+    static const uint8_t sm[16 * 16] __attribute__((aligned(16))) = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1,
+        2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, -1,
+        4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1,
+        5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1,
+        6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1,
+        7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1,
+        8, 9, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1,
+        9, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+    };
+
+    uint64_t x, y1, y2, y3, y4;
+    int i, j;
+    size_t n = 0;
+
+    for (i = 0; i < 8; i++) {
+        x = xx[i];
+        y1 = x % 10000;
+        x /= 10000;
+        y2 = x % 10000;
+        x /= 10000;
+        y3 = x % 10000;
+        x /= 10000;
+        y4 = x % 10000;
+        x /= 10000;
+        __m128i a = _mm_set1_epi8(0);
+        a = _mm_insert_epi32(a, *(uint32_t *) &fmt_div10000_digits[4 * x], 0);
+        a = _mm_insert_epi32(a, *(uint32_t *) &fmt_div10000_digits[4 * y4], 1);
+        a = _mm_insert_epi32(a, *(uint32_t *) &fmt_div10000_digits[4 * y3], 2);
+        a = _mm_insert_epi32(a, *(uint32_t *) &fmt_div10000_digits[4 * y2], 3);
+        j = __builtin_ctz(0x8000 | ~_mm_movemask_epi8(_mm_cmpeq_epi8(a, _mm_set1_epi8('0'))));
+        a = _mm_shuffle_epi8(a, *(__m128i *) &sm[16 * j]);
+        _mm_storeu_si128((__m128i *) &buf[n], a);
+        n += 16 - j;
+        if (j < 15) {
+            memcpy(&buf[n], &fmt_div10000_digits[4 * y1], 4);
+            n += 4;
+        } else {
+            a = _mm_set1_epi8(0);
+            a = _mm_insert_epi32(a, *(uint32_t *) &fmt_div10000_digits[4 * y1], 0);
+            j = __builtin_ctz(~_mm_movemask_epi8(_mm_cmpeq_epi8(a, _mm_set1_epi8('0'))));
+            _mm_storeu_si128((__m128i *) &buf[n], a);
+            n += 4 - j;
+        }
         buf[n++] = ',';
     }
     buf[n] = 0;
@@ -905,6 +963,19 @@ int main()
     p = buf[m];
     for (k = 0; k < rep; k++) {
         p += fmt_u64_div10000(p, &xu64[k * 8]);
+    }
+    len[m] = p - buf[m];
+    ok[m] = (len[m] == len[0] && memcmp(buf[0], buf[m], len[0]) == 0);
+    gettimeofday(&stop, NULL);
+    time = stop.tv_sec - start.tv_sec + (stop.tv_usec - start.tv_usec) / 1000000.0;
+    printf("%zu %d %.2f %.2f\n", len[m], ok[m], time, rep * 8 / time);
+
+    m++;
+    printf("%-16s", "u64 d10000 sse:");
+    gettimeofday(&start, NULL);
+    p = buf[m];
+    for (k = 0; k < rep; k++) {
+        p += fmt_u64_div10000_sse(p, &xu64[k * 8]);
     }
     len[m] = p - buf[m];
     ok[m] = (len[m] == len[0] && memcmp(buf[0], buf[m], len[0]) == 0);
